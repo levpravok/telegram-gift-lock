@@ -1,0 +1,38 @@
+// !$*UTF8*$!
+{ archiveVersion = 1; classes = {}; objectVersion = 56; objects = {
+183512DCF5EF78244391C797 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+C1FFFB61196F8C993C0041FD = {isa = PBXBuildFile; fileRef = 183512DCF5EF78244391C797; };
+B35D2004794C6CB393E988E5 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiftLockCore.swift; sourceTree = "<group>"; };
+7EEC11CD4CE93941B20553AD = {isa = PBXBuildFile; fileRef = B35D2004794C6CB393E988E5; };
+DEA3C44109360C066122CDAC = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiftLockApp.swift; sourceTree = "<group>"; };
+3895CFE1D168D52D51596EFE = {isa = PBXBuildFile; fileRef = DEA3C44109360C066122CDAC; };
+38A007151ABE87CC01A5B6E9 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = GiftLock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+64292B1C2B2E13EAD8788FC8 = {isa = PBXGroup; children = (828D338A9B04221C9CBE286F, DD3429FC8319BB3A23E9614F, FBDC4F23F93125BBEEAE800C); sourceTree = "<group>"; };
+828D338A9B04221C9CBE286F = {isa = PBXGroup; children = (B35D2004794C6CB393E988E5,DEA3C44109360C066122CDAC,183512DCF5EF78244391C797); path = Source/GiftLock; sourceTree = "<group>"; };
+FBDC4F23F93125BBEEAE800C = {isa = PBXGroup; children = (38A007151ABE87CC01A5B6E9,2E635C1267B14E15F71F5D1A); name = Products; sourceTree = "<group>"; };
+BCE16DD0260827ECF338C787 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (7EEC11CD4CE93941B20553AD,3895CFE1D168D52D51596EFE); runOnlyForDeploymentPostprocessing = 0; };
+7561BFB015D8F536760CB671 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+0189424A5A60FED329FA868E = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (C1FFFB61196F8C993C0041FD); runOnlyForDeploymentPostprocessing = 0; };
+0E8A3AD980EC179856012B7E = {isa = PBXNativeTarget; buildConfigurationList = C57128001CE614BF8549D6BB; buildPhases = (BCE16DD0260827ECF338C787,7561BFB015D8F536760CB671,0189424A5A60FED329FA868E); buildRules = (); dependencies = (); name = GiftLock; productName = GiftLock; productReference = 38A007151ABE87CC01A5B6E9; productType = "com.apple.product-type.application"; };
+98F54143AB4E86B28C3AFEE0 = {isa = PBXProject; attributes = {LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; }; buildConfigurationList = 862894B703A6DEDF96A9DD6C; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en,Base); mainGroup = 64292B1C2B2E13EAD8788FC8; productRefGroup = FBDC4F23F93125BBEEAE800C; projectDirPath = ""; projectRoot = ""; targets = (0E8A3AD980EC179856012B7E,95F9FC6E252E44B94B26FF0C); };
+
+B05BEBB064D0A38CFA49E7B1 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 5.0; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = dwarf;}; name = Debug; };
+8C8F75B80E1CEC91DA7341A3 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 5.0; SWIFT_OPTIMIZATION_LEVEL = "-O";}; name = Release; };
+862894B703A6DEDF96A9DD6C = {isa = XCConfigurationList; buildConfigurations = (B05BEBB064D0A38CFA49E7B1,8C8F75B80E1CEC91DA7341A3); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+258A38BC256D3BE0936BEE7F = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 5.0; PRODUCT_NAME = GiftLock; PRODUCT_BUNDLE_IDENTIFIER = org.example.GiftLockPrototype; TARGETED_DEVICE_FAMILY = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Gift Lock"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait; CODE_SIGN_STYLE = Automatic; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = dwarf;}; name = Debug; };
+AF08645F33FB7E7450F93573 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 5.0; PRODUCT_NAME = GiftLock; PRODUCT_BUNDLE_IDENTIFIER = org.example.GiftLockPrototype; TARGETED_DEVICE_FAMILY = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Gift Lock"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait; CODE_SIGN_STYLE = Automatic; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_OPTIMIZATION_LEVEL = "-O";}; name = Release; };
+C57128001CE614BF8549D6BB = {isa = XCConfigurationList; buildConfigurations = (258A38BC256D3BE0936BEE7F,AF08645F33FB7E7450F93573); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+
+06D988CE8A4343CC9ED0D4F0 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiftLockUITests.swift; sourceTree = "<group>"; };
+A43402011D74D5734C7D96ED = {isa = PBXBuildFile; fileRef = 06D988CE8A4343CC9ED0D4F0; };
+DD3429FC8319BB3A23E9614F = {isa = PBXGroup; children = (06D988CE8A4343CC9ED0D4F0); path = TestsUI; sourceTree = "<group>"; };
+2E635C1267B14E15F71F5D1A = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = GiftLockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+55C2A1145FF0806565865D92 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A43402011D74D5734C7D96ED); runOnlyForDeploymentPostprocessing = 0; };
+4C743359E8477277AB459C6E = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+7DFA1C01224F79EDEC26861C = {isa = PBXContainerItemProxy; containerPortal = 98F54143AB4E86B28C3AFEE0; proxyType = 1; remoteGlobalIDString = 0E8A3AD980EC179856012B7E; remoteInfo = GiftLock; };
+F2911E6CDEAA0FE13B12A6A4 = {isa = PBXTargetDependency; target = 0E8A3AD980EC179856012B7E; targetProxy = 7DFA1C01224F79EDEC26861C; };
+95F9FC6E252E44B94B26FF0C = {isa = PBXNativeTarget; buildConfigurationList = E1984331FEF83049637531EF; buildPhases = (55C2A1145FF0806565865D92,4C743359E8477277AB459C6E); buildRules = (); dependencies = (F2911E6CDEAA0FE13B12A6A4); name = GiftLockUITests; productName = GiftLockUITests; productReference = 2E635C1267B14E15F71F5D1A; productType = "com.apple.product-type.bundle.ui-testing"; };
+E1984331FEF83049637531EF = {isa = XCConfigurationList; buildConfigurations = (A25B1182C4233C040DE70C3F,F56AA46FB42C677E1224D0D0); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+A25B1182C4233C040DE70C3F = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = org.example.GiftLockPrototype.UITests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; TEST_TARGET_NAME = GiftLock; }; name = Debug; };
+F56AA46FB42C677E1224D0D0 = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = org.example.GiftLockPrototype.UITests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; TEST_TARGET_NAME = GiftLock; }; name = Release; };
+}; rootObject = 98F54143AB4E86B28C3AFEE0; }
