@@ -1,7 +1,8 @@
 import SwiftUI
+import Lottie
 
-private let telegramBlue = Color(red: 0.04, green: 0.51, blue: 0.91)
-private let pageBackground = Color(uiColor: .systemGroupedBackground)
+private let telegramBlue = Color(hex: 0x299ff6)
+private let pageBackground = Color(hex: 0x18242e)
 
 @MainActor
 final class GiftLockModel: ObservableObject {
@@ -14,6 +15,8 @@ final class GiftLockModel: ObservableObject {
     @Published var busy = false
     @Published var showSettings = false
     @Published var showCollection = false
+    @Published var showRecipients = false
+    @Published var showSaleOptions = false
     @Published var tapTarget: String?
     @Published var tourCaption = ""
     @Published var tourRunning = false
@@ -63,14 +66,14 @@ final class GiftLockModel: ObservableObject {
             tapTarget = target; await pause(0.28); tapTarget = nil
         }
         tourCaption = ""
-        await pause(1)
-        await tap("settings")
-        showSettings = true
-        await pause(1.8)
-        showSettings = false
+        await pause(2.2)
+        await tap("transfer")
+        showRecipients = true
+        await pause(1.4)
+        await tap("recipient")
+        showRecipients = false
         await pause(0.45)
-        await tap("offer")
-        await begin(.acceptOffer(offerID: "sample-offer-1"))
+        await begin(.transfer(giftID: "nail-4465", recipientID: DemoGiftService.recipient.id))
         await pause(2)
         await tap("authorize")
         await proceed()
@@ -79,29 +82,28 @@ final class GiftLockModel: ObservableObject {
         await pause(0.7)
         await tap("authorize")
         await commit()
-        await pause(1.6)
+        await pause(1.8)
         password = DemoGiftService.samplePassword
         await pause(0.7)
         await tap("authorize")
         await commit()
-        await pause(2)
+        await pause(2.2)
         await tap("done")
         cancel()
-        await pause(0.6)
-        await tap("collection")
-        showCollection = true
-        await pause(1.2)
-        await tap("crystal-381")
-        showCollection = false
-        await pause(0.4)
-        await begin(.transfer(giftID: "crystal-381", recipientID: DemoGiftService.recipient.id))
+        await reset()
+        await pause(0.8)
+        await tap("settings")
+        showSettings = true
         await pause(2)
+        showSettings = false
+        await pause(0.6)
+        await begin(.acceptOffer(offerID: "sample-offer-1"))
+        await pause(1.8)
         await tap("authorize")
         await proceed()
-        await pause(1.4)
-        await tap("cancel")
+        await pause(1.1)
         cancel()
-        await pause(1.8)
+        await pause(1.5)
         tourCaption = ""; tourRunning = false
     }
 }
@@ -114,7 +116,8 @@ struct GiftLockApp: App {
         WindowGroup {
             GiftsView(model: model)
                 .tint(telegramBlue)
-                .preferredColorScheme(.light)
+                .preferredColorScheme(.dark)
+                .statusBarHidden()
                 .onChange(of: scenePhase) { _, phase in
                     if phase != .active { model.password = "" }
                     if phase == .background { model.cancel() }
@@ -130,189 +133,261 @@ struct GiftLockApp: App {
     }
 }
 
+// The public gift artwork is rendered locally. This view has no Telegram account connection.
 struct GiftsView: View {
     @ObservedObject var model: GiftLockModel
-    @State private var draft = ""
-    @State private var declined = false
+    @State private var closed = false
+    @State private var showLocalInfo = false
+    private var ownsDemoCopy: Bool { model.snapshot.gifts.contains { $0.id == "nail-4465" } }
     var body: some View {
-        ZStack {
-            TelegramWallpaper().ignoresSafeArea()
-            VStack(spacing: 0) {
-                chatHeader
-                ScrollView {
-                    VStack(spacing: 14) {
-                        Text("Today").font(.system(size: 12, weight: .medium))
-                            .padding(.horizontal, 11).padding(.vertical, 4)
-                            .background(.white.opacity(0.38), in: Capsule()).padding(.top, 18)
-                        message("Hi! Is your Moon Lantern still available?", outgoing: false, time: "9:38")
-                        message("Yes, you can send me an offer here.", outgoing: true, time: "9:39")
-                        if model.snapshot.gifts.contains(where: { $0.id == "moon-1042" }) && !declined {
-                            offerCard
-                        } else if declined {
-                            Text("Offer declined").font(.system(size: 13)).padding(10)
-                                .background(.white.opacity(0.4), in: Capsule())
-                        } else {
-                            completedCard
+        GeometryReader { geometry in
+            let width = min(geometry.size.width - 12, 470.0)
+            let scale = width / 680.0
+            ZStack {
+                Color(hex: 0x070b0e).ignoresSafeArea()
+                if closed {
+                    VStack(spacing: 22) {
+                        Text("Gift preview").font(.title2.weight(.semibold))
+                        NailBraceletAnimation().frame(width: 200, height: 200)
+                        Text("Nail Bracelet #4465").font(.headline)
+                        Button("Open Gift") { closed = false }.buttonStyle(.borderedProminent)
+                        Text("Offline prototype · no Telegram account connection").font(.caption).foregroundStyle(.secondary)
+                    }
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            giftHeader(width: width, scale: scale)
+                            giftBody(scale: scale)
                         }
-                        Button { model.showSettings = true } label: {
-                            Label(model.snapshot.locked ? "Gift Lock is on" : "Gift Lock is off", systemImage: model.snapshot.locked ? "lock.fill" : "lock.open.fill")
-                                .font(.system(size: 12, weight: .medium)).foregroundStyle(Color(red: 0.18, green: 0.39, blue: 0.36))
-                                .padding(.horizontal, 12).padding(.vertical, 7)
-                                .background(.white.opacity(0.42), in: Capsule())
-                        }.buttonStyle(.plain).accessibilityIdentifier("giftLockSettings")
-                            .overlay { tapIndicator("settings") }
-                        if model.snapshot.gifts.count < 3 {
-                            Text("Your other gifts are still in your collection.")
-                                .font(.system(size: 12)).foregroundStyle(.black.opacity(0.55))
-                        }
-                        Spacer(minLength: 15)
-                    }.padding(.horizontal, 13)
+                        .frame(width: width)
+                        .background(pageBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 40 * scale))
+                        .padding(.top, 50 * scale)
+                        .padding(.bottom, 8)
+                        .frame(maxWidth: .infinity)
+                    }
                 }
-                bottomBar
             }
         }
+        .ignoresSafeArea()
         .sheet(item: $model.activeReview, onDismiss: { model.cancel() }) { review in
             GiftReviewSheet(model: model, review: review)
-                .presentationDetents([.height(model.receipt != nil ? 365 : model.enteringPassword ? 505 : review.isPolicy ? 360 : 575)])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(28)
+                .presentationDetents(model.receipt != nil ? [.height(390)] : model.enteringPassword ? [.large] : [.height(review.isPolicy ? 370 : 570)])
+                .presentationDragIndicator(.visible).presentationCornerRadius(26)
+        }
+        .sheet(isPresented: $model.showRecipients) {
+            recipientPicker.presentationDetents([.height(365)]).presentationDragIndicator(.visible).presentationCornerRadius(26)
+        }
+        .sheet(isPresented: $model.showSaleOptions) {
+            saleOptions.presentationDetents([.height(430)]).presentationDragIndicator(.visible).presentationCornerRadius(26)
         }
         .sheet(isPresented: $model.showSettings) {
-            LockSettingsView(model: model)
-                .presentationDetents([.height(485)]).presentationDragIndicator(.visible).presentationCornerRadius(28)
+            LockSettingsView(model: model).presentationDetents([.height(440)]).presentationDragIndicator(.visible).presentationCornerRadius(26)
         }
-        .sheet(isPresented: $model.showCollection) {
-            collectionSheet.presentationDetents([.height(420)]).presentationDragIndicator(.visible).presentationCornerRadius(28)
-        }
-        .alert("Couldn’t open review", isPresented: Binding(get: { !model.error.isEmpty && model.activeReview == nil }, set: { if !$0 { model.error = "" } })) {
-            Button("OK") { model.error = "" }
-        } message: { Text(model.error) }
+        .alert("Offline preview", isPresented: $showLocalInfo) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(model.error.isEmpty ? "This screen uses public gift artwork. Your real bracelet and Telegram account are not connected to this app." : model.error + " Reset the demo from the menu to try again.") }
+        .onChange(of: model.error) { _, value in if !value.isEmpty && model.activeReview == nil { showLocalInfo = true } }
     }
-    private var chatHeader: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
-                .frame(width: 40, height: 40).background(.ultraThinMaterial, in: Circle())
-                .accessibilityLabel("Back")
-            Spacer(minLength: 0)
-            VStack(spacing: 1) {
-                Text("Mira").font(.system(size: 16, weight: .semibold))
-                Text("online").font(.system(size: 11)).foregroundStyle(telegramBlue)
-            }.frame(width: 142, height: 39).background(.ultraThinMaterial, in: Capsule())
-            Spacer(minLength: 0)
-            Menu {
-                Button("Gift Lock", systemImage: "lock.shield") { model.showSettings = true }
-                Button("My Gifts", systemImage: "gift") { model.showCollection = true }
-                Button("Play 25-second demo", systemImage: "play") { Task { await model.runTour() } }
-                Button("Reset sample data", systemImage: "arrow.counterclockwise") { declined = false; Task { await model.reset() } }
-            } label: {
-                ZStack {
-                    Circle().fill(LinearGradient(colors: [Color(red: 0.91, green: 0.68, blue: 0.44), Color(red: 0.65, green: 0.37, blue: 0.22)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    Text("M").font(.system(size: 18, weight: .medium)).foregroundStyle(.white)
-                }.frame(width: 39, height: 39).overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 2))
-            }
-        }.foregroundStyle(.black).padding(.horizontal, 15).padding(.top, 7).padding(.bottom, 5)
-    }
-    private func message(_ text: String, outgoing: Bool, time: String) -> some View {
-        HStack {
-            if outgoing { Spacer(minLength: 45) }
-            VStack(alignment: .trailing, spacing: 1) {
-                Text(text).font(.system(size: 15)).frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 3) {
-                    Text(time).font(.system(size: 10))
-                    if outgoing { Image(systemName: "checkmark").font(.system(size: 9, weight: .medium)) }
-                }.foregroundStyle(.black.opacity(0.4))
-            }.padding(.horizontal, 11).padding(.top, 8).padding(.bottom, 5)
-                .background(outgoing ? Color(red: 0.87, green: 0.97, blue: 0.85) : Color.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 15))
-                .frame(maxWidth: 275, alignment: outgoing ? .trailing : .leading)
-            if !outgoing { Spacer(minLength: 45) }
-        }
-    }
-    private var offerCard: some View {
-        VStack(spacing: 0) {
-            GiftArt(symbol: "moon.stars.fill").frame(width: 94, height: 94)
-                .clipShape(RoundedRectangle(cornerRadius: 23)).padding(.top, 17)
-            Text("Mira offered you **★ 4,800**\nfor your **Moon Lantern #1042**")
-                .font(.system(size: 13)).multilineTextAlignment(.center).lineSpacing(3).padding(.top, 15)
-            Text("Expires in 23 hours").font(.system(size: 12)).foregroundStyle(.black.opacity(0.44)).padding(.top, 12)
-            HStack(spacing: 6) {
-                Button("Decline") { declined = true }.frame(maxWidth: .infinity).padding(.vertical, 12)
-                    .background(.white.opacity(0.42), in: RoundedRectangle(cornerRadius: 10))
-                Button { Task { await model.begin(.acceptOffer(offerID: "sample-offer-1")) } } label: {
-                    Label("Accept", systemImage: "lock.fill").frame(maxWidth: .infinity).padding(.vertical, 12)
-                }.background(.white.opacity(0.60), in: RoundedRectangle(cornerRadius: 10))
-                    .accessibilityIdentifier("reviewOffer").overlay { tapIndicator("offer") }
-            }.font(.system(size: 14, weight: .semibold)).foregroundStyle(Color(red: 0.16, green: 0.34, blue: 0.29))
-                .padding(7).padding(.top, 10)
-        }.frame(width: 273).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
-            .overlay(RoundedRectangle(cornerRadius: 24).stroke(.white.opacity(0.23), lineWidth: 0.5))
-            .padding(.top, 9)
-    }
-    private var completedCard: some View {
-        VStack(spacing: 12) {
-            GiftArt(symbol: "moon.stars.fill").frame(width: 88, height: 88).clipShape(RoundedRectangle(cornerRadius: 22))
-            Text("Offer accepted").font(.system(size: 15, weight: .semibold))
-            Text("Moon Lantern #1042 was transferred to Mira.\nYou received ★ 4,320.")
-                .font(.system(size: 13)).multilineTextAlignment(.center).lineSpacing(3)
-            Label("Authorized with Gift Lock", systemImage: "checkmark.shield.fill")
-                .font(.system(size: 12, weight: .medium)).foregroundStyle(Color(red: 0.10, green: 0.43, blue: 0.31))
-        }.padding(20).frame(width: 273).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24)).padding(.top, 9)
-    }
-    private var bottomBar: some View {
-        HStack(spacing: 10) {
-            Button { model.showCollection = true } label: {
-                Image(systemName: "paperclip").font(.system(size: 22)).frame(width: 43, height: 43)
-                    .background(.ultraThinMaterial, in: Circle())
-            }.accessibilityLabel("My Gifts").accessibilityIdentifier("openCollection").overlay { tapIndicator("collection") }
-            HStack(spacing: 8) {
-                Image(systemName: "face.smiling").font(.system(size: 20)).foregroundStyle(.gray)
-                TextField("Message", text: $draft).font(.system(size: 16))
-                Image(systemName: "clock").font(.system(size: 18)).foregroundStyle(.gray)
-            }.padding(.horizontal, 11).frame(height: 43).background(.ultraThinMaterial, in: Capsule())
-            Image(systemName: "mic.fill").font(.system(size: 21)).frame(width: 37, height: 43)
-        }.foregroundStyle(telegramBlue).padding(.horizontal, 10).padding(.top, 6).padding(.bottom, 4)
-    }
-    private var collectionSheet: some View {
-        VStack(spacing: 20) {
-            sheetHeader("My Gifts") { model.showCollection = false }
+    private func giftHeader(width: CGFloat, scale s: CGFloat) -> some View {
+        ZStack(alignment: .top) {
+            RadialGradient(colors: [Color(hex: 0xd08b6d), Color(hex: 0xb05770)], center: UnitPoint(x: 0.5, y: 0.37), startRadius: 0, endRadius: width * 0.68)
+            PepperBackdrop()
+            NailBraceletAnimation().frame(width: 250 * s, height: 250 * s).offset(y: 36 * s)
             HStack {
-                Text("\(model.snapshot.gifts.count) gifts · sample account").font(.system(size: 13)).foregroundStyle(.secondary)
+                Button { closed = true } label: { circleControl("xmark", scale: s) }.accessibilityLabel("Close gift")
                 Spacer()
-                Label(model.snapshot.stars.formatted(), systemImage: "star.fill").font(.system(size: 13, weight: .medium)).foregroundStyle(.orange)
+                Menu {
+                    Button(model.snapshot.locked ? "Gift Lock · On" : "Gift Lock · Off", systemImage: "lock.shield") { model.showSettings = true }
+                        .accessibilityIdentifier("giftLockSettings")
+                    Button("Purchase Offers", systemImage: "tag") { model.showSaleOptions = true }
+                    Button("Play Demo", systemImage: "play") { Task { await model.runTour() } }
+                    Button("Reset Demo", systemImage: "arrow.counterclockwise") { Task { await model.reset() } }
+                } label: { circleControl("ellipsis", scale: s) }
+                    .accessibilityIdentifier("giftMenu").overlay { DemoTap(visible: model.tapTarget == "settings") }
+            }.padding(.horizontal, 20 * s).padding(.top, 20 * s)
+            // Position the same title, subtitle and controls as the supplied 680px-wide panel.
+        }
+        .overlay(alignment: .top) {
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    Text("Nail Bracelet ").foregroundStyle(.white)
+                    Text("#4465").foregroundStyle(Color(hex: 0xffd9d8))
+                }.font(.system(size: 36 * s, weight: .medium)).padding(.top, 291 * s)
+                Text("Rose Gold").font(.system(size: 28 * s)).foregroundStyle(Color(hex: 0xffd9d8)).padding(.top, 14 * s)
+                HStack(spacing: 20 * s) {
+                    giftAction("Transfer", symbol: "diamond.fill", scale: s) { model.showRecipients = true }
+                        .accessibilityIdentifier("beginTransfer").overlay { DemoTap(visible: model.tapTarget == "transfer") }
+                    giftAction("Wear", symbol: "crown.fill", scale: s) { showLocalInfo = true }
+                    giftAction("Sell", symbol: "tag.fill", scale: s) { model.showSaleOptions = true }
+                        .accessibilityIdentifier("saleOptions")
+                }.padding(.horizontal, 20 * s).padding(.top, 38 * s)
             }
-            HStack(spacing: 12) {
-                ForEach(model.snapshot.gifts) { gift in
-                    Button {
-                        model.showCollection = false
-                        Task { try? await Task.sleep(for: .seconds(0.4)); await model.begin(.transfer(giftID: gift.id, recipientID: DemoGiftService.recipient.id)) }
-                    } label: {
-                        VStack(spacing: 8) {
-                            GiftArt(symbol: gift.symbol).frame(height: 108).clipShape(RoundedRectangle(cornerRadius: 13))
-                            Text(gift.title).font(.system(size: 13, weight: .medium)).foregroundStyle(.primary)
-                            Text(gift.number).font(.system(size: 12)).foregroundStyle(.secondary)
-                        }.padding(8).background(.white, in: RoundedRectangle(cornerRadius: 16))
-                    }.buttonStyle(.plain).overlay { tapIndicator(gift.id) }
-                }
-            }
-            Text("Select a gift to transfer to Mira").font(.system(size: 13)).foregroundStyle(.secondary)
-            Text("Prototype · fictional gifts and account").font(.system(size: 10)).foregroundStyle(.tertiary)
-            Spacer(minLength: 0)
-        }.padding(18).padding(.top, 8).background(pageBackground)
+        }
+        .frame(height: 556 * s)
+        .clipped()
     }
-    private func tapIndicator(_ target: String) -> some View {
-        DemoTap(visible: model.tapTarget == target)
+    private func circleControl(_ symbol: String, scale s: CGFloat) -> some View {
+        Image(systemName: symbol).font(.system(size: 31 * s, weight: symbol == "ellipsis" ? .bold : .regular))
+            .foregroundStyle(.white).frame(width: 72 * s, height: 72 * s)
+            .background(Color(hex: 0xce7b50), in: Circle())
+            .overlay(Circle().stroke(Color(hex: 0xf1b484).opacity(0.9), lineWidth: 2 * s))
+    }
+    private func giftAction(_ title: String, symbol: String, scale s: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 9 * s) {
+                Group {
+                    if title == "Transfer" { TransferGiftIcon().frame(width: 44 * s, height: 44 * s) }
+                    else { Image(systemName: symbol).font(.system(size: 39 * s, weight: .medium)).frame(height: 44 * s) }
+                }
+                Text(title).font(.system(size: 27 * s))
+            }.foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 120 * s)
+                .background(Color(hex: 0xce7b50), in: RoundedRectangle(cornerRadius: 40 * s))
+                .overlay(RoundedRectangle(cornerRadius: 40 * s).stroke(Color(hex: 0xf1b484), lineWidth: 2 * s))
+        }.buttonStyle(.plain)
+    }
+    private func giftBody(scale s: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                infoRow("Owner", scale: s) {
+                    HStack(spacing: 11 * s) {
+                        Text("L").font(.system(size: 21 * s, weight: .semibold)).foregroundStyle(.white)
+                            .frame(width: 40 * s, height: 40 * s)
+                            .background(LinearGradient(colors: [Color(hex: 0xffdc8b), Color(hex: 0xffb58f)], startPoint: .top, endPoint: .bottom), in: Circle())
+                        Text("Levi").foregroundStyle(telegramBlue)
+                        Image(systemName: "sparkles").foregroundStyle(telegramBlue).font(.system(size: 22 * s))
+                    }
+                }
+                infoRow("Model", scale: s) { attribute("Rose Gold", rarity: "3.5%", scale: s) }
+                infoRow("Symbol", scale: s) { attribute("Chili Pepper", rarity: "0.4%", scale: s) }
+                infoRow("Backdrop", scale: s) { attribute("Mystic Pearl", rarity: "1.2%", scale: s) }
+                infoRow("Availability", scale: s) { Text("4,696/4,818 issued") }
+                infoRow("Value", scale: s) {
+                    HStack(spacing: 10 * s) { Text("₪ 834.00"); Text("learn more").font(.system(size: 23 * s)).foregroundStyle(telegramBlue).padding(.horizontal, 10 * s).padding(.vertical, 3 * s).background(telegramBlue.opacity(0.2), in: Capsule()) }
+                }
+                HStack(alignment: .center, spacing: 8) {
+                    (Text("Gifted by ").foregroundStyle(.white) + Text("Dmitry Warsz").foregroundStyle(telegramBlue) + Text(" to ").foregroundStyle(.white) + Text("Poiagust").foregroundStyle(telegramBlue) + Text(" on\n14/02/25.").foregroundStyle(.white))
+                        .font(.system(size: 26 * s)).lineSpacing(3 * s).frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "trash").font(.system(size: 24 * s)).foregroundStyle(telegramBlue).padding(.trailing, 8 * s)
+                }.padding(.horizontal, 18 * s).frame(minHeight: 110 * s)
+            }
+            .background(Color(hex: 0x18242e))
+            .clipShape(RoundedRectangle(cornerRadius: 40 * s))
+            .overlay(RoundedRectangle(cornerRadius: 40 * s).stroke(Color(hex: 0x233543), lineWidth: 2 * s))
+            .padding(.horizontal, 40 * s).padding(.top, 40 * s)
+            (Text("The gift is visible on your profile. ").foregroundStyle(Color(hex: 0xaec0d0)) + Text("Hide >").foregroundStyle(Color(hex: 0x58c4ff)))
+                .font(.system(size: 26 * s)).padding(.top, 33 * s).padding(.bottom, 48 * s)
+            Button { closed = true } label: {
+                Text("OK").font(.system(size: 27 * s, weight: .medium)).foregroundStyle(.white)
+                    .frame(maxWidth: .infinity).frame(height: 78 * s)
+                    .background(Color(hex: 0x00aff6), in: Capsule()).overlay(Capsule().stroke(Color.cyan.opacity(0.75), lineWidth: 1))
+            }.padding(.horizontal, 40 * s).padding(.bottom, 28 * s)
+        }
+    }
+    private func infoRow<Content: View>(_ label: String, scale s: CGFloat, @ViewBuilder content: () -> Content) -> some View {
+        HStack(spacing: 0) {
+            Text(label).padding(.leading, 18 * s).frame(width: 166 * s, alignment: .leading)
+            Rectangle().fill(Color(hex: 0x233543)).frame(width: 2 * s)
+            content().frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 20 * s)
+        }.font(.system(size: 26 * s)).foregroundStyle(.white).frame(height: 80 * s)
+            .overlay(alignment: .bottom) { Rectangle().fill(Color(hex: 0x233543)).frame(height: 2 * s) }
+    }
+    private func attribute(_ title: String, rarity: String, scale s: CGFloat) -> some View {
+        HStack(spacing: 10 * s) {
+            Text(title)
+            Text(rarity).font(.system(size: 23 * s)).foregroundStyle(telegramBlue)
+                .padding(.horizontal, 10 * s).padding(.vertical, 3 * s).background(telegramBlue.opacity(0.2), in: Capsule())
+        }
+    }
+    private var recipientPicker: some View {
+        VStack(spacing: 22) {
+            sheetHeader("Transfer Gift") { model.showRecipients = false }
+            Text("Choose a Recipient").font(.system(size: 23, weight: .semibold))
+            Button {} label: {
+                HStack(spacing: 12) {
+                    Text("M").font(.title2.weight(.medium)).frame(width: 44, height: 44).background(telegramBlue.opacity(0.25), in: Circle())
+                    VStack(alignment: .leading, spacing: 4) { Text("Mira").font(.headline); Text("@mira_example · sample recipient").font(.caption).foregroundStyle(.secondary) }
+                    Spacer()
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(telegramBlue)
+                }.foregroundStyle(.white).padding(14).background(Color(hex: 0x20313e), in: RoundedRectangle(cornerRadius: 14))
+            }.buttonStyle(.plain)
+            Button {
+                model.showRecipients = false
+                Task { try? await Task.sleep(for: .seconds(0.4)); await model.begin(.transfer(giftID: "nail-4465", recipientID: DemoGiftService.recipient.id)) }
+            } label: { primaryLabel("Continue") }.accessibilityIdentifier("confirmRecipient").overlay { DemoTap(visible: model.tapTarget == "recipient") }
+            Text("Offline demo · real bracelet untouched").font(.system(size: 11)).foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+        }.padding(20).padding(.top, 10).background(pageBackground)
+    }
+    private var saleOptions: some View {
+        VStack(spacing: 19) {
+            sheetHeader("Purchase Offers") { model.showSaleOptions = false }
+            NailBraceletAnimation().frame(width: 105, height: 105)
+            Text("Nail Bracelet #4465").font(.system(size: 20, weight: .semibold))
+            Text("Mira offers ★ 4,800").font(.system(size: 16))
+            Text("Sample offer · not a real offer on your gift").font(.system(size: 12)).foregroundStyle(.secondary)
+            Button {
+                model.showSaleOptions = false
+                Task { try? await Task.sleep(for: .seconds(0.4)); await model.begin(.acceptOffer(offerID: "sample-offer-1")) }
+            } label: { primaryLabel("Review Offer") }.accessibilityIdentifier("reviewOffer")
+            Spacer(minLength: 0)
+        }.padding(20).padding(.top, 10).background(pageBackground)
     }
 }
 
-struct TelegramWallpaper: View {
+struct TransferGiftIcon: View {
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                LinearGradient(colors: [Color(red: 0.76, green: 0.90, blue: 0.78), Color(red: 0.77, green: 0.85, blue: 0.96), Color(red: 0.70, green: 0.84, blue: 0.94)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                Image("ChatPattern").resizable().renderingMode(.template)
-                    .scaledToFill().frame(width: geometry.size.width, height: geometry.size.height)
-                    .foregroundStyle(Color(red: 0.28, green: 0.58, blue: 0.64).opacity(0.18)).clipped()
+            let scale = geometry.size.width / 44
+            ZStack(alignment: .bottomTrailing) {
+                Path { path in
+                    path.move(to: CGPoint(x: 4*scale, y: 13*scale)); path.addLine(to: CGPoint(x: 12*scale,y:3*scale)); path.addLine(to: CGPoint(x:32*scale,y:3*scale)); path.addLine(to: CGPoint(x:40*scale,y:13*scale)); path.addLine(to: CGPoint(x:22*scale,y:39*scale)); path.closeSubpath()
+                    path.move(to: CGPoint(x:4*scale,y:13*scale)); path.addLine(to: CGPoint(x:40*scale,y:13*scale))
+                    path.move(to: CGPoint(x:12*scale,y:3*scale)); path.addLine(to: CGPoint(x:17*scale,y:13*scale)); path.addLine(to: CGPoint(x:22*scale,y:39*scale))
+                    path.move(to: CGPoint(x:32*scale,y:3*scale)); path.addLine(to: CGPoint(x:27*scale,y:13*scale)); path.addLine(to: CGPoint(x:22*scale,y:39*scale))
+                }.stroke(.white, lineWidth: 2.5*scale)
+                Image(systemName: "arrow.right.circle.fill").font(.system(size: 19*scale)).foregroundStyle(.white).background(Color(hex: 0xce7b50), in: Circle()).offset(x: 2*scale,y:1*scale)
+            }
+        }
+    }
+}
+
+struct PepperBackdrop: View {
+    private let points: [(CGFloat, CGFloat)] = [(0.08,0.04),(0.36,0.03),(0.65,0.03),(0.91,0.08),(0.19,0.12),(0.48,0.12),(0.77,0.17),(0.04,0.32),(0.32,0.22),(0.62,0.29),(0.94,0.32),(0.17,0.43),(0.45,0.47),(0.74,0.45),(0.05,0.62),(0.33,0.60),(0.64,0.65),(0.91,0.58)]
+    var body: some View {
+        GeometryReader { geometry in
+            ForEach(points.indices, id: \.self) { index in
+                Image("PepperPattern").resizable().renderingMode(.template)
+                    .foregroundStyle(Color(hex: 0x9b0526).opacity(0.21))
+                    .frame(width: geometry.size.width * 0.065, height: geometry.size.width * 0.065)
+                    .position(x: geometry.size.width * points[index].0, y: geometry.size.height * points[index].1)
             }
         }.accessibilityHidden(true)
+    }
+}
+
+struct NailBraceletAnimation: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let container = UIView()
+        container.clipsToBounds = true
+        let animation = LottieAnimationView(animation: LottieAnimation.named("NailBracelet"), configuration: LottieConfiguration(renderingEngine: .mainThread))
+        animation.translatesAutoresizingMaskIntoConstraints = false
+        animation.contentMode = .scaleAspectFit
+        animation.loopMode = .loop
+        animation.backgroundBehavior = .pauseAndRestore
+        container.addSubview(animation)
+        NSLayoutConstraint.activate([
+            animation.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            animation.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            animation.topAnchor.constraint(equalTo: container.topAnchor),
+            animation.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        animation.play()
+        return container
+    }
+    func updateUIView(_ view: UIView, context: Context) {}
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UIView, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? 140, height: proposal.height ?? 140)
     }
 }
 
@@ -321,26 +396,20 @@ struct LockSettingsView: View {
     var body: some View {
         VStack(spacing: 20) {
             sheetHeader("Gift Lock") { model.showSettings = false }
-            Image(systemName: "lock.shield.fill").font(.system(size: 43)).foregroundStyle(telegramBlue).padding(.top, 6)
+            Image(systemName: "lock.shield.fill").font(.system(size: 43)).foregroundStyle(telegramBlue)
             Text("A password before gifts leave.").font(.system(size: 20, weight: .semibold))
-            Text("Use your 2-Step Verification password for\ntransfers and accepted purchase offers.")
-                .font(.system(size: 14)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineSpacing(3)
+            Text("Require your 2-Step Verification password for\ntransfers and accepted purchase offers.").font(.system(size: 14)).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button {
                 model.showSettings = false
                 Task { try? await Task.sleep(for: .seconds(0.4)); await model.begin(.setLock(enabled: !model.snapshot.locked)) }
             } label: {
-                HStack {
-                    Text("Gift Lock").foregroundStyle(.primary)
-                    Spacer()
-                    Text(model.snapshot.locked ? "On" : "Off").foregroundStyle(.secondary)
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(.tertiary)
-                }.font(.system(size: 16)).padding(16).background(.white, in: RoundedRectangle(cornerRadius: 12))
-            }.buttonStyle(.plain).accessibilityIdentifier("toggleGiftLock")
-            Text("Turning Gift Lock off also requires your password.")
-                .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            Text("Prototype · sample data").font(.system(size: 10)).foregroundStyle(.tertiary)
+                HStack { Text("Gift Lock"); Spacer(); Text(model.snapshot.locked ? "On" : "Off").foregroundStyle(.secondary); Image(systemName: "chevron.right").font(.caption) }
+                    .foregroundStyle(.white).padding(16).background(Color(hex: 0x20313e), in: RoundedRectangle(cornerRadius: 14))
+            }.accessibilityIdentifier("toggleGiftLock")
+            Text("Turning Gift Lock off also requires your password.").font(.caption).foregroundStyle(.secondary)
+            Text("Offline prototype · no Telegram account connection").font(.system(size: 10)).foregroundStyle(.secondary)
             Spacer(minLength: 0)
-        }.padding(18).padding(.top, 8).frame(maxWidth: .infinity).background(pageBackground)
+        }.padding(20).padding(.top, 10).background(pageBackground)
     }
 }
 
@@ -348,202 +417,116 @@ struct GiftReviewSheet: View {
     @ObservedObject var model: GiftLockModel
     let review: GiftReview
     @FocusState private var passwordFocused: Bool
-    private var policyEnabled: Bool { if case .setLock(let enabled) = review.intent { return enabled }; return false }
-    private var actionTitle: String {
-        review.isPolicy ? (policyEnabled ? "Enable Gift Lock" : "Turn Off Gift Lock") : (review.isSale ? "Accept Offer" : "Transfer Gift")
-    }
+    private var enabled: Bool { if case .setLock(let value) = review.intent { return value }; return false }
+    private var title: String { review.isPolicy ? (enabled ? "Enable Gift Lock" : "Turn Off Gift Lock") : review.isSale ? "Accept Offer" : "Transfer Gift" }
     var body: some View {
         VStack(spacing: 0) {
-            sheetHeader(model.receipt?.title ?? (model.enteringPassword ? "Password" : actionTitle)) {
-                passwordFocused = false; model.cancel()
-            }.padding(.horizontal, 18).padding(.top, 24).padding(.bottom, 12)
-                .overlay(alignment: .topTrailing) { DemoTap(visible: model.tapTarget == "cancel").frame(width: 35, height: 35).padding(.top, 24).padding(.trailing, 18) }
+            sheetHeader(model.receipt != nil ? "Authorization Complete" : model.enteringPassword ? "Password" : title) { passwordFocused = false; model.cancel() }
+                .padding(.horizontal, 20).padding(.top, 24).padding(.bottom, 10)
             ScrollView {
-                VStack(spacing: 17) {
-                    if let receipt = model.receipt {
-                        success(receipt)
-                    } else if model.enteringPassword {
-                        authorization
-                    } else {
-                        reviewContent
-                    }
-                }.padding(.horizontal, 18).padding(.top, 7).padding(.bottom, 12)
+                VStack(spacing: 18) {
+                    if let receipt = model.receipt { success(receipt) }
+                    else if model.enteringPassword { authorization }
+                    else { reviewContent }
+                }.padding(.horizontal, 20).padding(.vertical, 8)
             }.scrollDismissesKeyboard(.interactively)
         }
         .background(pageBackground)
         .safeAreaInset(edge: .bottom) {
             if model.receipt == nil {
-                VStack(spacing: 9) {
+                VStack(spacing: 10) {
                     Button {
-                        passwordFocused = false
-                        Task { if model.enteringPassword { await model.commit() } else { await model.proceed() } }
-                    } label: {
-                        HStack(spacing: 7) {
-                            if model.busy { ProgressView().tint(.white) }
-                            else { Image(systemName: "lock.fill").font(.system(size: 13)) }
-                            Text(model.enteringPassword ? "Authorize & \(actionTitle)" : review.requiresPassword ? "Continue with Password" : "Confirm")
-                                .font(.system(size: 16, weight: .semibold))
-                        }.frame(maxWidth: .infinity).frame(height: 50)
-                    }.buttonStyle(.plain).foregroundStyle(.white).background(telegramBlue, in: RoundedRectangle(cornerRadius: 12))
+                        Task {
+                            if model.enteringPassword { await model.commit() } else { await model.proceed() }
+                            passwordFocused = false
+                        }
+                    } label: { primaryLabel(model.enteringPassword ? "Authorize & \(title)" : review.requiresPassword ? "Continue with Password" : "Confirm") }
                         .disabled(model.busy || (model.enteringPassword && model.password.isEmpty))
                         .opacity(model.enteringPassword && model.password.isEmpty ? 0.45 : 1)
-                        .accessibilityIdentifier("authorizeAction")
-                        .overlay { DemoTap(visible: model.tapTarget == "authorize") }
-                    Text("Prototype · sample data").font(.system(size: 10)).foregroundStyle(.tertiary)
-                }.padding(.horizontal, 18).padding(.top, 10).padding(.bottom, 8).background(pageBackground)
+                        .accessibilityIdentifier("authorizeAction").overlay { DemoTap(visible: model.tapTarget == "authorize") }
+                    Text("Offline demo · real bracelet untouched").font(.system(size: 10)).foregroundStyle(.secondary)
+                }.padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 8).background(pageBackground)
             }
         }
         .onDisappear { model.password = "" }
     }
     private var reviewContent: some View {
         VStack(spacing: 16) {
-            if let gift = review.gift {
-                GiftArt(symbol: gift.symbol).frame(width: 92, height: 92).clipShape(RoundedRectangle(cornerRadius: 23))
-                Text(gift.title + " " + gift.number).font(.system(size: 20, weight: .semibold))
+            if review.gift != nil {
+                NailBraceletAnimation().frame(width: 115, height: 115)
+                Text("Nail Bracelet #4465").font(.system(size: 22, weight: .semibold))
+                Text("Rose Gold").font(.system(size: 15)).foregroundStyle(.secondary)
             } else {
-                Image(systemName: policyEnabled ? "lock.shield.fill" : "lock.open.fill").font(.system(size: 40))
-                    .foregroundStyle(policyEnabled ? telegramBlue : .orange).padding(.vertical, 10)
-                Text(policyEnabled ? "Enable Gift Lock?" : "Turn off Gift Lock?").font(.system(size: 20, weight: .semibold))
+                Image(systemName: enabled ? "lock.shield.fill" : "lock.open.fill").font(.system(size: 42)).foregroundStyle(telegramBlue).padding(12)
+                Text(enabled ? "Enable Gift Lock?" : "Turn off Gift Lock?").font(.system(size: 21, weight: .semibold))
             }
-            if let peer = review.recipient {
+            if let recipient = review.recipient {
                 VStack(spacing: 0) {
-                    detailRow(review.isSale ? "Buyer" : "Recipient", peer.name + " · " + peer.username)
-                    Divider().padding(.leading, 16)
-                    if review.isSale {
-                        detailRow("Offer", "★ " + review.grossStars.formatted())
-                        Divider().padding(.leading, 16)
-                        detailRow("Sample fee", "− ★ " + review.feeStars.formatted())
-                    } else {
-                        detailRow("Transfer fee", "Free")
-                    }
-                }.background(.white, in: RoundedRectangle(cornerRadius: 12))
-                HStack {
-                    Text("You receive").font(.system(size: 15))
-                    Spacer()
-                    Text("★ " + review.netStars.formatted()).font(.system(size: 21, weight: .semibold))
-                }.foregroundStyle(review.isSale ? Color(red: 0.13, green: 0.58, blue: 0.36) : .primary)
-                    .padding(16).background(review.isSale ? Color.green.opacity(0.08) : Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-                Text(review.isSale ? "The gift will be transferred after authorization." : "This is a gift transfer, not a sale.")
-                    .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    row(review.isSale ? "Buyer" : "Recipient", recipient.name + " · " + recipient.username)
+                    Divider().overlay(Color(hex: 0x2a3c4b))
+                    row(review.isSale ? "Offer" : "Transfer fee", review.isSale ? "★ " + review.grossStars.formatted() : "Free · demo")
+                    if review.isSale { Divider().overlay(Color(hex: 0x2a3c4b)); row("Sample fee", "− ★ " + review.feeStars.formatted()) }
+                }.background(Color(hex: 0x20313e), in: RoundedRectangle(cornerRadius: 14))
+                HStack { Text("You receive"); Spacer(); Text("★ " + review.netStars.formatted()).fontWeight(.semibold) }
+                    .font(.system(size: 19)).padding(16).background(Color(hex: review.isSale ? 0x163c34 : 0x30313a), in: RoundedRectangle(cornerRadius: 14))
+                Text(review.isSale ? "Sample sale · authorization applies only to this offer." : "This is a gift transfer, not a sale.").font(.system(size: 12)).foregroundStyle(.secondary)
             } else {
-                Text(policyEnabled ? "Require a password for outgoing gifts." : "Gifts will no longer require a password.")
-                    .font(.system(size: 14)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                Text(enabled ? "Require fresh authorization for outgoing gifts." : "Gifts will no longer require a password in this demo.").font(.system(size: 14)).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
         }
     }
     private var authorization: some View {
-        VStack(spacing: 17) {
-            Image(systemName: "lock.fill").font(.system(size: 38)).foregroundStyle(telegramBlue)
-                .frame(height: 56).padding(.top, 2)
-            Text("Enter Your Password").font(.system(size: 21, weight: .semibold))
-            Text("Confirm with your 2-Step Verification password.")
-                .font(.system(size: 14)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+        VStack(spacing: 18) {
+            Image(systemName: "lock.fill").font(.system(size: 37)).foregroundStyle(telegramBlue).padding(.top, 6)
+            Text("Enter Your Password").font(.system(size: 22, weight: .semibold))
+            Text("Confirm with your 2-Step Verification password.").font(.system(size: 14)).foregroundStyle(.secondary).multilineTextAlignment(.center)
             SecureField("Password", text: $model.password)
                 .textContentType(.password).autocorrectionDisabled().textInputAutocapitalization(.never)
-                .font(.system(size: 17)).padding(16).background(.white, in: RoundedRectangle(cornerRadius: 12))
+                .font(.system(size: 17)).padding(16).background(Color(hex: 0x20313e), in: RoundedRectangle(cornerRadius: 13))
                 .focused($passwordFocused).submitLabel(.done)
-                .onSubmit { passwordFocused = false; Task { await model.commit() } }
-                .accessibilityIdentifier("giftPassword")
-            if !model.error.isEmpty {
-                Text(model.error).font(.system(size: 12)).foregroundStyle(.red)
-                    .multilineTextAlignment(.center).accessibilityIdentifier("authorizationError")
-            }
-            VStack(spacing: 5) {
-                if let gift = review.gift, let peer = review.recipient {
-                    Text(gift.title + " " + gift.number + " → " + peer.username).font(.system(size: 13, weight: .medium))
-                    Text("You receive ★ " + review.netStars.formatted()).font(.system(size: 13)).foregroundStyle(.secondary)
-                } else {
-                    Text(actionTitle).font(.system(size: 14, weight: .medium))
-                }
-            }.frame(maxWidth: .infinity).padding(12).background(.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 12))
-            Text("Demo only: gift-demo-2026\nNever use your real Telegram password here.")
-                .font(.system(size: 10)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineSpacing(2)
+                .onSubmit { Task { await model.commit(); passwordFocused = false } }.accessibilityIdentifier("giftPassword")
+            if !model.error.isEmpty { Text(model.error).font(.system(size: 12)).foregroundStyle(.red).multilineTextAlignment(.center).accessibilityIdentifier("authorizationError") }
+            VStack(spacing: 6) {
+                Text(review.isPolicy ? title : "Nail Bracelet #4465 → @mira_example").font(.system(size: 13, weight: .medium))
+                if !review.isPolicy { Text("You receive ★ " + review.netStars.formatted()).font(.system(size: 13)).foregroundStyle(.secondary) }
+            }.frame(maxWidth: .infinity).padding(12).background(Color(hex: 0x20313e), in: RoundedRectangle(cornerRadius: 13))
+            Text("Demo only: gift-demo-2026\nNever enter your real Telegram password here.").font(.system(size: 10)).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }
     }
     private func success(_ receipt: GiftReceipt) -> some View {
-        VStack(spacing: 17) {
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 50)).foregroundStyle(Color(red: 0.20, green: 0.69, blue: 0.40)).padding(.top, 8)
-            Text(receipt.detail).font(.system(size: 15)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineSpacing(3)
-            Label(model.snapshot.locked ? "Gift Lock stays on" : "Gift Lock is off", systemImage: model.snapshot.locked ? "lock.fill" : "lock.open.fill")
-                .font(.system(size: 12)).foregroundStyle(.secondary)
-            Button("Done") { model.cancel() }.font(.system(size: 16, weight: .semibold))
-                .frame(maxWidth: .infinity).frame(height: 49).foregroundStyle(.white)
-                .background(telegramBlue, in: RoundedRectangle(cornerRadius: 12))
-                .accessibilityIdentifier("doneAction").overlay { DemoTap(visible: model.tapTarget == "done") }
+        VStack(spacing: 18) {
+            Image(systemName: "checkmark.shield.fill").font(.system(size: 51)).foregroundStyle(.green).padding(.top, 8)
+            Text(review.isSale ? "Offer authorized" : review.isPolicy ? receipt.title : "Transfer authorized").font(.system(size: 23, weight: .semibold))
+            Text("Completed in the offline demo only.\nYour real bracelet is unchanged.").font(.system(size: 15)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineSpacing(3)
+            Label(model.snapshot.locked ? "Gift Lock stays on" : "Gift Lock is off", systemImage: "lock.fill").font(.system(size: 12)).foregroundStyle(.secondary)
+            Button { model.cancel() } label: { primaryLabel("Done") }.accessibilityIdentifier("doneAction").overlay { DemoTap(visible: model.tapTarget == "done") }
         }
     }
-    private func detailRow(_ label: String, _ value: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(label).foregroundStyle(.secondary)
-            Spacer(minLength: 8)
-            Text(value).multilineTextAlignment(.trailing)
-        }.font(.system(size: 14)).padding(.horizontal, 16).padding(.vertical, 12)
+    private func row(_ label: String, _ value: String) -> some View {
+        HStack { Text(label).foregroundStyle(.secondary); Spacer(); Text(value) }.font(.system(size: 14)).padding(.horizontal, 16).padding(.vertical, 13)
     }
 }
 
+private func primaryLabel(_ title: String) -> some View {
+    Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 49)
+        .background(Color(hex: 0x00aff6), in: RoundedRectangle(cornerRadius: 13))
+}
 private func sheetHeader(_ title: String, close: @escaping () -> Void) -> some View {
     HStack {
         Color.clear.frame(width: 30, height: 30)
         Spacer()
         Text(title).font(.system(size: 15, weight: .semibold))
         Spacer()
-        Button(action: close) {
-            Image(systemName: "xmark").font(.system(size: 12, weight: .bold)).foregroundStyle(.gray)
-                .frame(width: 30, height: 30).background(.white.opacity(0.8), in: Circle())
-        }.accessibilityLabel("Cancel")
+        Button(action: close) { Image(systemName: "xmark").font(.system(size: 12, weight: .bold)).foregroundStyle(Color(hex: 0xa8b6c1)).frame(width: 30, height: 30).background(Color(hex: 0x293c4b), in: Circle()) }.accessibilityLabel("Cancel")
     }
 }
-
 struct DemoTap: View {
     let visible: Bool
     var body: some View {
-        Circle().fill(.white.opacity(0.20)).overlay(Circle().stroke(.white.opacity(0.95), lineWidth: 3))
-            .frame(width: 38, height: 38).scaleEffect(visible ? 1.15 : 0.7).opacity(visible ? 1 : 0)
-            .animation(.easeOut(duration: 0.2), value: visible).allowsHitTesting(false).accessibilityHidden(true)
+        Circle().fill(.white.opacity(0.2)).overlay(Circle().stroke(.white.opacity(0.95), lineWidth: 3)).frame(width: 38, height: 38)
+            .scaleEffect(visible ? 1.15 : 0.7).opacity(visible ? 1 : 0).animation(.easeOut(duration: 0.2), value: visible).allowsHitTesting(false).accessibilityHidden(true)
     }
 }
-
-struct GiftArt: View {
-    let symbol: String
-    var hero = false
-    private var moon: Bool { symbol == "moon.stars.fill" }
-    private var blue: Bool { symbol == "diamond.fill" }
-    var body: some View {
-        GeometryReader { geometry in
-            let size = min(geometry.size.width, geometry.size.height)
-            ZStack {
-                LinearGradient(colors: moon ? [Color(red: 0.13, green: 0.16, blue: 0.35), Color(red: 0.31, green: 0.29, blue: 0.58)] : blue ? [Color(red: 0.79, green: 0.90, blue: 1), Color(red: 0.62, green: 0.77, blue: 0.98)] : [Color(red: 1, green: 0.91, blue: 0.70), Color(red: 1, green: 0.78, blue: 0.55)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                Circle().fill(.white.opacity(0.055)).frame(width: size * 1.1).offset(x: size * 0.6, y: size * 0.3)
-                Circle().stroke(.white.opacity(0.10), lineWidth: 1).frame(width: size * 0.9).offset(x: -size * 0.45, y: -size * 0.15)
-                ForEach(0..<7) { index in
-                    Image(systemName: "sparkle").font(.system(size: index.isMultiple(of: 2) ? 10 : 6))
-                        .foregroundStyle(.white.opacity(0.5))
-                        .offset(x: size * CGFloat([-0.37, 0.33, -0.24, 0.40, -0.4, 0.23, 0.08][index]),
-                                y: size * CGFloat([-0.25, -0.30, 0.35, 0.20, 0.05, 0.38, -0.4][index]))
-                }
-                if moon {
-                    VStack(spacing: 0) {
-                        RoundedRectangle(cornerRadius: 9).stroke(Color(red: 0.99, green: 0.82, blue: 0.46), lineWidth: 3)
-                            .frame(width: size * 0.17, height: size * 0.10).offset(y: 3)
-                        ZStack {
-                            RoundedRectangle(cornerRadius: size * 0.20)
-                                .fill(LinearGradient(colors: [Color(red: 1, green: 0.89, blue: 0.58), Color(red: 0.95, green: 0.61, blue: 0.23)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                .shadow(color: .orange.opacity(0.4), radius: 18)
-                            RoundedRectangle(cornerRadius: size * 0.18).stroke(.white.opacity(0.45), lineWidth: 1.5).padding(5)
-                            Image(systemName: "moon.stars.fill").font(.system(size: size * 0.23)).foregroundStyle(Color(red: 0.48, green: 0.31, blue: 0.17))
-                        }.frame(width: size * 0.48, height: size * 0.50)
-                        Capsule().fill(Color(red: 1, green: 0.8, blue: 0.4)).frame(width: size * 0.20, height: size * 0.035)
-                        Capsule().fill(Color(red: 1, green: 0.8, blue: 0.4)).frame(width: 3, height: size * 0.09)
-                        Image(systemName: "diamond.fill").font(.system(size: size * 0.045)).foregroundStyle(.orange)
-                    }
-                } else {
-                    Image(systemName: symbol)
-                        .font(.system(size: size * 0.48, weight: .regular))
-                        .foregroundStyle(LinearGradient(colors: blue ? [.white, Color(red: 0.12, green: 0.48, blue: 0.89)] : [.white, .orange], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .shadow(color: (blue ? Color.blue : Color.orange).opacity(0.3), radius: 8, y: 7)
-                        .rotationEffect(.degrees(blue ? -10 : 12))
-                }
-            }.frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
-        }.accessibilityHidden(true)
-    }
+private extension Color {
+    init(hex: UInt32) { self.init(red: Double((hex >> 16) & 255) / 255, green: Double((hex >> 8) & 255) / 255, blue: Double(hex & 255) / 255) }
 }

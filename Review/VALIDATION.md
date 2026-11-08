@@ -4,7 +4,7 @@ Verified on **8 November 2026**, using Xcode 26.4.1, Swift 6.3.1 and an iPhone 1
 
 ## Build
 
-The native iOS app compiled successfully for the iOS Simulator, without third-party dependencies or a signing team. It was installed and run in the simulator. The package contains source and project files, not a signed App Store or device installation package.
+The native iOS app compiled successfully for the iOS Simulator, with the pinned official Lottie 4.6.1 renderer and without a signing team. It was installed and run in the simulator. The package contains source and project files, not a signed App Store or device installation package.
 
 ## Policy tests: 16 passed, zero failures
 
@@ -29,15 +29,15 @@ The native iOS app compiled successfully for the iOS Simulator, without third-pa
 
 XCTest UI automation tapped the app's real controls and verified:
 
-- Cancelling the sale review preserves the offer and allows it to be reviewed again.
-- An incorrect password shows an error; the correct sample password completes the sale and leaves two gifts.
+- Cancelling the transfer review returns to the unchanged reference gift panel.
+- An incorrect password shows an error; the correct sample password authorizes only the local demo transfer. The success message explicitly says the real bracelet is unchanged.
 - Disabling Gift Lock opens the password step; its submit button is disabled when empty; cancellation leaves the setting on.
 
 ## Recording and visual verification
 
-The revised submitted video records the compiled native app’s guided sequence in its Telegram-style chat interface, with a phone frame and gradient presentation matching the supplied references. The sequence uses the same service methods as the interactive controls. It demonstrates the chat offer, Gift Lock setting, sale review, wrong-password attempt, successful sale, collection, zero-proceeds transfer review, password requirement and cancellation. It is an automated walkthrough of running code, not a hand-animated mockup.
+The revised submitted video records the compiled native app’s guided sequence in the dark gift panel matched to the supplied Nail Bracelet #4465 screenshot, with a phone frame and gradient presentation. The sequence uses the same service methods as the interactive controls. It demonstrates the real public bracelet animation, local sample recipient selection, zero-proceeds transfer review, wrong-password error, authorized demo transfer, Gift Lock setting, sample offer review and cancellation. It is an automated walkthrough of running code, not a hand-animated mockup.
 
-The chat, sale review, authorization error and lock-setting screens were visually inspected in simulator screenshots. The final delivery MP4 was decoded and verified: **28.00 seconds, 1080 × 1080, 30 fps, H.264, approximately 6.8 MB**, within the supplied 30-second limit. Its phone frame is presentation only; the feature behavior is recorded from the compiled app. Frames sampled from the exported file show the wrong-password error, successful sale and transfer review. No production Telegram login, password or gift transaction was used.
+The gift panel, transfer review, authorization error and lock-setting screens are visually checked in simulator screenshots and the exported video. The final delivery MP4 was decoded and verified: **28.00 seconds, 1080 × 1080, 30 fps, H.264, approximately 6.8 MB**, within the supplied 30-second limit. Its phone frame is presentation only; the feature behavior is recorded from the compiled app. Frames sampled from the final export are checked for the wrong-password error, authorized demo transfer, offer review and the matching gift panel. No production Telegram login, password or gift transaction was used.
 
 ## Limits
 

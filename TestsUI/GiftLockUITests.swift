@@ -2,23 +2,28 @@ import XCTest
 
 final class GiftLockUITests: XCTestCase {
     @MainActor
-    func testCancelLeavesCollectionUntouched() throws {
-        let app = XCUIApplication()
-        app.launch()
-        XCTAssertTrue(app.buttons["reviewOffer"].waitForExistence(timeout: 8))
-        app.buttons["reviewOffer"].tap()
-        XCTAssertTrue(app.staticTexts["Accept Offer"].waitForExistence(timeout: 3))
-        app.buttons["Cancel"].tap()
-        XCTAssertTrue(app.buttons["reviewOffer"].waitForExistence(timeout: 3))
+    private func openTransfer(_ app: XCUIApplication) {
+        XCTAssertTrue(app.buttons["beginTransfer"].waitForExistence(timeout: 10))
+        app.buttons["beginTransfer"].tap()
+        XCTAssertTrue(app.buttons["confirmRecipient"].waitForExistence(timeout: 3))
+        app.buttons["confirmRecipient"].tap()
+        XCTAssertTrue(app.buttons["authorizeAction"].waitForExistence(timeout: 4))
     }
 
     @MainActor
-    func testWrongPasswordThenAuthorizedSale() throws {
-        let app = XCUIApplication()
-        app.launch()
-        XCTAssertTrue(app.buttons["reviewOffer"].waitForExistence(timeout: 8))
-        app.buttons["reviewOffer"].tap()
-        XCTAssertTrue(app.buttons["authorizeAction"].waitForExistence(timeout: 3))
+    func testCancelLeavesGiftUntouched() throws {
+        let app = XCUIApplication(); app.launch()
+        openTransfer(app)
+        XCTAssertTrue(app.staticTexts["This is a gift transfer, not a sale."].exists)
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["beginTransfer"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Rose Gold"].exists)
+    }
+
+    @MainActor
+    func testWrongPasswordThenAuthorizedDemoTransfer() throws {
+        let app = XCUIApplication(); app.launch()
+        openTransfer(app)
         app.buttons["authorizeAction"].tap()
         let password = app.secureTextFields["giftPassword"]
         XCTAssertTrue(password.waitForExistence(timeout: 3))
@@ -27,27 +32,25 @@ final class GiftLockUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Incorrect password. Your gift has not moved."].waitForExistence(timeout: 3))
         password.tap(); password.typeText("gift-demo-2026")
         app.buttons["authorizeAction"].tap()
-        XCTAssertTrue(app.staticTexts["Offer accepted"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Transfer authorized"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Completed in the offline demo only.\nYour real bracelet is unchanged."].exists)
         app.buttons["doneAction"].tap()
-        XCTAssertTrue(app.staticTexts["Offer accepted"].waitForExistence(timeout: 3))
-        XCTAssertFalse(app.buttons["reviewOffer"].exists)
-        app.buttons["openCollection"].tap()
-        XCTAssertTrue(app.staticTexts["2 gifts · sample account"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["beginTransfer"].waitForExistence(timeout: 3))
     }
 
     @MainActor
     func testDisablingLockRequiresAuthorizationAndCanBeCancelled() throws {
-        let app = XCUIApplication()
-        app.launch()
-        XCTAssertTrue(app.buttons["giftLockSettings"].waitForExistence(timeout: 8))
+        let app = XCUIApplication(); app.launch()
+        XCTAssertTrue(app.buttons["giftMenu"].waitForExistence(timeout: 10))
+        app.buttons["giftMenu"].tap()
         app.buttons["giftLockSettings"].tap()
         app.buttons["toggleGiftLock"].tap()
-        XCTAssertTrue(app.staticTexts["Turn off Gift Lock?"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Turn off Gift Lock?"].waitForExistence(timeout: 4))
         app.buttons["authorizeAction"].tap()
         XCTAssertTrue(app.secureTextFields["giftPassword"].waitForExistence(timeout: 3))
         XCTAssertFalse(app.buttons["authorizeAction"].isEnabled)
         app.buttons["Cancel"].tap()
-        XCTAssertTrue(app.buttons["giftLockSettings"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["giftLockSettings"].label.contains("Gift Lock is on"))
+        app.buttons["giftMenu"].tap()
+        XCTAssertTrue(app.buttons["giftLockSettings"].label.contains("On"))
     }
 }

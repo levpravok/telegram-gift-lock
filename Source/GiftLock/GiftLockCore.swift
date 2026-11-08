@@ -79,7 +79,7 @@ actor DemoGiftService: GiftLockService {
     static let phoneSession = "demo-phone"
     static let recipient = GiftRecipient(id: "sample-peer-17", name: "Mira", username: "@mira_example")
     static let sampleGifts = [
-        Collectible(id: "moon-1042", title: "Moon Lantern", number: "#1042", symbol: "moon.stars.fill"),
+        Collectible(id: "nail-4465", title: "Nail Bracelet", number: "#4465", symbol: "NailBracelet"),
         Collectible(id: "crystal-381", title: "Blue Crystal", number: "#0381", symbol: "diamond.fill"),
         Collectible(id: "star-892", title: "Lucky Star", number: "#0892", symbol: "star.fill")
     ]
@@ -125,7 +125,7 @@ actor DemoGiftService: GiftLockService {
             gift = found; peer = Self.recipient
         case .acceptOffer(let offerID):
             guard offerID == "sample-offer-1", offerAvailable, offerExpiresAt > now else { throw GiftLockError.offerUnavailable }
-            guard let found = owned.first(where: { $0.id == "moon-1042" }) else { throw GiftLockError.noLongerOwned }
+            guard let found = owned.first(where: { $0.id == "nail-4465" }) else { throw GiftLockError.noLongerOwned }
             gift = found; peer = Self.recipient
             gross = 4800; fee = 480 // Illustrative sample quote, NOT Telegram's current fee schedule.
         case .setLock(let enabled):
@@ -178,11 +178,11 @@ actor DemoGiftService: GiftLockService {
             detail = "\(review.gift!.title) \(review.gift!.number) sent to \(Self.recipient.username)."
         case .acceptOffer:
             guard offerAvailable, offerExpiresAt > now else { throw GiftLockError.offerUnavailable }
-            guard owned.contains(where: { $0.id == "moon-1042" }) else { throw GiftLockError.noLongerOwned }
-            owned.removeAll { $0.id == "moon-1042" }
+            guard owned.contains(where: { $0.id == "nail-4465" }) else { throw GiftLockError.noLongerOwned }
+            owned.removeAll { $0.id == "nail-4465" }
             offerAvailable = false; stars += review.netStars
             title = "Offer accepted"
-            detail = "\(review.netStars.formatted()) Stars added. Moon Lantern #1042 sent to \(Self.recipient.username)."
+            detail = "\(review.netStars.formatted()) Stars added. Nail Bracelet #4465 sent to \(Self.recipient.username)."
         case .setLock(let enabled):
             locked = enabled
             title = enabled ? "Gift Lock enabled" : "Gift Lock disabled"

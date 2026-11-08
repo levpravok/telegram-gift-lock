@@ -40,7 +40,7 @@ final class GiftLockCoreTests: XCTestCase {
         XCTAssertEqual(quote.grossStars, 4800); XCTAssertEqual(quote.feeStars, 480); XCTAssertEqual(quote.netStars, 4320)
         _ = try await server.commit(quote.id, password: password, session: session)
         let state = await server.snapshot()
-        XCTAssertFalse(state.gifts.contains { $0.id == "moon-1042" })
+        XCTAssertFalse(state.gifts.contains { $0.id == "nail-4465" })
         XCTAssertEqual(state.stars, 5520); XCTAssertEqual(state.receipts.count, 1); XCTAssertTrue(state.locked)
     }
     func testTransferDoesNotCreditStars() async throws {

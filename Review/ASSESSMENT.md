@@ -29,7 +29,7 @@ Use the existing 2-Step password initially. A separate gift PIN would add enroll
 - **A coherent setting:** owners who want extra friction can choose it, with the same rule on every participating client.
 - **A natural fit:** it builds on an authentication mechanism Telegram already uses for sensitive operations. [Telegram's SRP documentation](https://core.telegram.org/api/srp)
 
-These are product hypotheses, not measured results. No user research or incident-rate study was conducted. The demo shows behavior, not evidence of a quantified reduction in scams.
+These are product hypotheses, not measured results. No user research or incident-rate study was conducted. The demo shows behavior, not evidence of a quantified reduction in scams. The current presentation matches the supplied real Nail Bracelet #4465 panel using publicly downloadable gift assets, with all transactions still simulated locally.
 
 ## Where the idea is weaker
 

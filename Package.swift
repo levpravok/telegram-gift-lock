@@ -6,7 +6,7 @@ let package = Package(
     platforms: [.macOS(.v13)],
     products: [.library(name: "GiftLockCore", targets: ["GiftLockCore"])],
     targets: [
-        .target(name: "GiftLockCore", path: "Source/GiftLock", exclude: ["GiftLockApp.swift", "Assets.xcassets"], sources: ["GiftLockCore.swift"]),
+        .target(name: "GiftLockCore", path: "Source/GiftLock", exclude: ["GiftLockApp.swift", "Assets.xcassets", "NailBracelet.json"], sources: ["GiftLockCore.swift"]),
         .testTarget(name: "GiftLockCoreTests", dependencies: ["GiftLockCore"], path: "Tests")
     ]
 )

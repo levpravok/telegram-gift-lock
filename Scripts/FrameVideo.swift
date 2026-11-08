@@ -58,7 +58,7 @@ mask.path = CGPath(roundedRect: screen, cornerWidth: 46, cornerHeight: 46, trans
 videoLayer.mask = mask
 parent.addSublayer(videoLayer)
 let caption = CATextLayer()
-caption.string = "Gift Lock · Working iOS prototype"
+caption.string = "Gift Lock · Offline prototype"
 caption.font = NSFont.systemFont(ofSize: 16, weight: .medium)
 caption.fontSize = 16
 caption.foregroundColor = NSColor.white.withAlphaComponent(0.92).cgColor

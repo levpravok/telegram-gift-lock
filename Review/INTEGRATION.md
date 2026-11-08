@@ -2,7 +2,7 @@
 
 ## Boundary
 
-`GiftLockService` isolates the presentation flow from the authority that approves and commits an operation. The included `DemoGiftService` is local, volatile and deliberately uses a known sample password. It demonstrates state transitions; it is not an implementation of Telegram authentication, a secure server or an adapter that can currently call a production Gift Lock endpoint.
+`GiftLockService` isolates the presentation flow from the authority that approves and commits an operation. The included `DemoGiftService` is local, volatile and deliberately uses a known sample password. The bracelet artwork and displayed attributes are public reference assets; they do not provide access to the real gift or its owner’s account. It demonstrates state transitions; it is not an implementation of Telegram authentication, a secure server or an adapter that can currently call a production Gift Lock endpoint.
 
 Telegram's iOS client uses its own components, engine and asynchronous infrastructure. The SwiftUI screens can run independently or be hosted as a prototype, but a production patch would need to follow those conventions, themes, localization, accessibility and navigation. No unverified patch against Telegram's repository is included.
 
