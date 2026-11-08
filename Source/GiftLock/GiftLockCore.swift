@@ -101,7 +101,8 @@ actor DemoGiftService: GiftLockService {
     private let clock: @Sendable () -> Date
     private let sessions: Set<String> = ["demo-phone", "demo-other-session"]
 
-    init(clock: @escaping @Sendable () -> Date = { Date() }) {
+    init(initiallyLocked: Bool = true, clock: @escaping @Sendable () -> Date = { Date() }) {
+        self.locked = initiallyLocked
         self.clock = clock
         self.offerExpiresAt = clock().addingTimeInterval(3600)
     }

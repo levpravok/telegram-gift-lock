@@ -1,6 +1,6 @@
 # Validation record
 
-Verified on **8 November 2026**, using Xcode 26.4.1, Swift 6.3.1 and an iPhone 17 Pro simulator running iOS 26.4.1. The project targets iOS 17 and later; older supported OS versions were not separately tested.
+Verified on **9 November 2026**, using Xcode 26.4.1, Swift 6.3.1 and an iPhone 17 Pro simulator running iOS 26.4.1. The project targets iOS 17 and later; older supported OS versions were not separately tested.
 
 ## Build
 
@@ -25,9 +25,9 @@ The native iOS app compiled successfully for the iOS Simulator, with the pinned 
 15. Unknown, expired and previously accepted offers are rejected.
 16. An already-transferred gift cannot be transferred again.
 
-## iPhone interface tests: 3 passed, zero failures
+## iPhone interface tests: 3 scenarios verified
 
-XCTest UI automation tapped the app's real controls and verified:
+XCTest UI automation verified the transfer and password scenarios, then the revised switch interaction passed its targeted rerun after its tap target was corrected:
 
 - Cancelling the transfer review returns to the unchanged reference gift panel.
 - An incorrect password shows an error; the correct sample password authorizes only the local demo transfer. The success message explicitly says the real bracelet is unchanged.
@@ -35,9 +35,9 @@ XCTest UI automation tapped the app's real controls and verified:
 
 ## Recording and visual verification
 
-The revised submitted video records the compiled native app’s guided sequence in the dark gift panel matched to the supplied Nail Bracelet #4465 screenshot, with a phone frame and gradient presentation. The sequence uses the same service methods as the interactive controls. It demonstrates the real public bracelet animation, local sample recipient selection, zero-proceeds transfer review, wrong-password error, authorized demo transfer, Gift Lock setting, sample offer review and cancellation. It is an automated walkthrough of running code, not a hand-animated mockup.
+The revised submitted video records the compiled native app’s guided sequence in the dark gift panel matched to the supplied Nail Bracelet #4465 screenshot, with a phone frame and gradient presentation. The sequence uses the same service methods as the interactive controls. The opening was decoded frame by frame to verify off → visible tap → on, with the startup flash trimmed. It starts with the Gift Lock switch off, shows a tap and the authenticated demo policy changing to on, then demonstrates the real public bracelet animation, local sample recipient selection, zero-proceeds transfer review, wrong-password error, authorized demo transfer, Gift Lock setting, sample offer review and cancellation. It is an automated walkthrough of running code, not a hand-animated mockup.
 
-The gift panel, transfer review, authorization error and lock-setting screens are visually checked in simulator screenshots and the exported video. The final delivery MP4 was decoded and verified: **28.00 seconds, 1080 × 1080, 30 fps, H.264, approximately 6.8 MB**, within the supplied 30-second limit. Its phone frame is presentation only; the feature behavior is recorded from the compiled app. Frames sampled from the final export are checked for the wrong-password error, authorized demo transfer, offer review and the matching gift panel. No production Telegram login, password or gift transaction was used.
+The gift panel, transfer review, authorization error and lock-setting screens are visually checked in simulator screenshots and the exported video. The final delivery MP4 was decoded and verified: **22.85 seconds (about 23 seconds), 1080 × 1080, approximately 30 fps, H.264, approximately 5.7 MB**, within the supplied 30-second limit. Its phone frame is presentation only; the feature behavior is recorded from the compiled app. Frames sampled from the final export are checked for the wrong-password error, authorized demo transfer, offer review and the matching gift panel. No production Telegram login, password or gift transaction was used.
 
 ## Limits
 

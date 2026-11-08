@@ -54,19 +54,31 @@ final class GiftLockModel: ObservableObject {
         }
         activeReview = nil; password = ""; error = ""; receipt = nil; enteringPassword = false
     }
-    func reset() async {
-        cancel(); service = DemoGiftService(); await refresh()
+    func reset(locked: Bool = true) async {
+        cancel(); service = DemoGiftService(initiallyLocked: locked); await refresh()
     }
     func runTour() async {
         guard !tourRunning else { return }
         tourRunning = true
-        await reset()
+        await reset(locked: false)
         func pause(_ seconds: Double) async { try? await Task.sleep(for: .seconds(seconds)) }
         func tap(_ target: String) async {
             tapTarget = target; await pause(0.28); tapTarget = nil
         }
         tourCaption = ""
-        await pause(2.2)
+        showSettings = true
+        await pause(1.1)
+        await tap("lockToggle")
+        // The guided recording supplies the known fictional credential. This uses
+        // the same policy authority as the interactive password-gated setting.
+        do {
+            let review = try await service.review(.setLock(enabled: true), session: session)
+            _ = try await service.commit(review.id, password: DemoGiftService.samplePassword, session: session)
+            await refresh()
+        } catch { self.error = error.localizedDescription }
+        await pause(0.9)
+        showSettings = false
+        await pause(0.6)
         await tap("transfer")
         showRecipients = true
         await pause(1.4)
@@ -91,12 +103,7 @@ final class GiftLockModel: ObservableObject {
         await tap("done")
         cancel()
         await reset()
-        await pause(0.8)
-        await tap("settings")
-        showSettings = true
-        await pause(2)
-        showSettings = false
-        await pause(0.6)
+        await pause(0.7)
         await begin(.acceptOffer(offerID: "sample-offer-1"))
         await pause(1.8)
         await tap("authorize")
@@ -125,7 +132,6 @@ struct GiftLockApp: App {
                 .task {
                     await model.refresh()
                     if ProcessInfo.processInfo.arguments.contains("--demo-tour") {
-                        try? await Task.sleep(for: .seconds(2))
                         await model.runTour()
                     }
                 }
@@ -403,9 +409,21 @@ struct LockSettingsView: View {
                 model.showSettings = false
                 Task { try? await Task.sleep(for: .seconds(0.4)); await model.begin(.setLock(enabled: !model.snapshot.locked)) }
             } label: {
-                HStack { Text("Gift Lock"); Spacer(); Text(model.snapshot.locked ? "On" : "Off").foregroundStyle(.secondary); Image(systemName: "chevron.right").font(.caption) }
-                    .foregroundStyle(.white).padding(16).background(Color(hex: 0x20313e), in: RoundedRectangle(cornerRadius: 14))
-            }.accessibilityIdentifier("toggleGiftLock")
+                HStack {
+                    Text("Gift Lock").font(.system(size: 17)).foregroundStyle(.white)
+                    Spacer()
+                    ZStack(alignment: model.snapshot.locked ? .trailing : .leading) {
+                        Capsule().fill(model.snapshot.locked ? telegramBlue : Color(hex: 0x243544))
+                        Circle().fill(model.snapshot.locked ? .white : Color(hex: 0x18242e))
+                            .frame(width: 25, height: 25).padding(3)
+                    }.frame(width: 51, height: 31)
+                }.padding(16).background(Color(hex: 0x20313e), in: RoundedRectangle(cornerRadius: 18))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Gift Lock").accessibilityValue(model.snapshot.locked ? "On" : "Off")
+            .accessibilityIdentifier("toggleGiftLock")
+            .animation(.easeInOut(duration: 0.22), value: model.snapshot.locked)
+            .overlay(alignment: .trailing) { DemoTap(visible: model.tapTarget == "lockToggle").padding(.trailing, 23) }
             Text("Turning Gift Lock off also requires your password.").font(.caption).foregroundStyle(.secondary)
             Text("Offline prototype · no Telegram account connection").font(.system(size: 10)).foregroundStyle(.secondary)
             Spacer(minLength: 0)

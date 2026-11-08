@@ -1,6 +1,6 @@
 # Gift Lock — Telegram feature proposal
 
-[Watch the 28-second demo](Media/GiftLock-Demo.mp4) · [Submission text](Review/SUBMISSION-MESSAGE.txt)
+[Watch the 23-second demo](Media/GiftLock-Demo.mp4) · [Submission text](Review/SUBMISSION-MESSAGE.txt)
 
 ![Gift Lock with Nail Bracelet #4465](Media/preview.png)
 
@@ -17,7 +17,7 @@ A runnable native iPhone prototype matching the supplied dark Telegram gift pane
 5. To test offer acceptance, tap **Sell** (or **Purchase Offers** in the ellipsis menu), then **Review Offer**. The offer and prices are explicitly fictional.
 6. Open **Gift Lock · On** in the ellipsis menu to review the setting. Turning it off also requires the sample password. When off, transfers and offers retain their review step.
 
-The ellipsis menu in the upper right offers **Reset Demo** and **Play Demo**. All state is in memory and resets on app relaunch. The sample account starts with Gift Lock already enabled and an assumed existing 2-Step Verification password. Enrollment and password recovery are outside the prototype.
+The ellipsis menu in the upper right offers **Reset Demo** and **Play Demo**. All state is in memory and resets on app relaunch. The normal interactive sample starts with Gift Lock enabled and an assumed existing 2-Step Verification password. The guided video briefly starts with the local copy unlocked, shows the Gift Lock switch being enabled, then proceeds into the bracelet demonstration. That scripted enrollment supplies the known fictional password directly to the same policy service; interactive lock changes still open the password flow. Enrollment and password recovery are outside the prototype.
 
 ## What the code actually does
 

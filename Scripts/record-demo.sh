@@ -1,8 +1,9 @@
 #!/bin/bash
-# Run from anywhere. Pass a booted iPhone simulator UUID as argument 1.
+# Arguments: booted iPhone simulator UUID, optional capture folder, optional startup trim seconds.
 set -euo pipefail
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
 device="${1:-booted}"
+clip_start="${3:-2.65}"
 capture_dir="${2:-$project_dir/Capture}"
 mkdir -p "$capture_dir"
 capture_dir="$(cd "$capture_dir" && pwd)"
@@ -26,7 +27,7 @@ trap - EXIT
 
 # Frame the actual recording and keep the final submission below 30 seconds.
 swift "$project_dir/Scripts/FrameVideo.swift" "$capture_dir/GiftLock.mov" \
-  "$capture_dir/GiftLock-Framed.mp4" 1.5 28
+  "$capture_dir/GiftLock-Framed.mp4" "$clip_start" 22.85
 swift "$project_dir/Scripts/CompressVideo.swift" "$capture_dir/GiftLock-Framed.mp4" \
   "$capture_dir/GiftLock-Demo.mp4"
 printf 'Saved video: %s\n' "$capture_dir/GiftLock-Demo.mp4"
